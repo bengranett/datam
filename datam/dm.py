@@ -141,7 +141,7 @@ class DataManager(object):
             'path': path,
             'remote': '',
             'digest': digest,
-            'size': os.path.getsize(path)/1024.
+            'size': os.path.getsize(path),
         }
         data.update(kwargs)
         self.manifest.append(data)
