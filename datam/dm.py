@@ -63,6 +63,8 @@ class DataManager(object):
             self.manifest = []
             self.meta = {}
 
+        self.change_flag = False
+
     def __contains__(self, tag):
         """ """
         for item in self.manifest:
@@ -79,6 +81,9 @@ class DataManager(object):
     def write_manifest(self, indent=2):
         """ """
         if not self.manifest:
+            return
+
+        if not self.change_flag:
             return
 
         self.meta['version'] = datam.__version__
@@ -154,6 +159,7 @@ class DataManager(object):
         data.update(kwargs)
         self.manifest.append(data)
         logging.debug("checked in '%s'", path)
+        self.change_flag = True
 
     def pop(self, path):
         """ """
@@ -162,6 +168,7 @@ class DataManager(object):
             if item['path'] == path:
                 pop = self.manifest.pop(i)
                 logging.debug("- %s", pop['path'])
+                self.change_flag = True
                 return
 
     def show(self):
