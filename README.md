@@ -9,27 +9,35 @@ Usage
 -----
 If you don't have a manifest file yet, you can start one.  Files can be added
 
-  datam add path1 path2
+```
+datam add path1 path2
+```
 
 or removed:
 
-  datam pop
+```
+datam pop
+```
 
 The local files can be verified against the manifest (by checksum):
 
-  datam verify
+```
+datam verify
+```
 
 By default `datam` will store the manifest in a file called `manifest.json`.
 A custom file may be specified with `--manifest path`
 
-There is simple support for fetching data files from a remote source.
+There is basic support for fetching data files from a remote source.  In this case the URL must be specified in the manifest file entry under the `remote` key.
 
-  datam clone
+```
+datam clone
+```
 
 Dependencies
 ------------
-pyblake2
-metafil
+`pyblake2`
+`metafil`
 
 Contributors
 ------------
