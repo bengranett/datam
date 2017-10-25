@@ -1,16 +1,17 @@
-import subprocess
+import subprocess, os
 
 __version__ = ''
 
+
 try:
     # if we are running in a git repo, look up the hash
-    cmd = subprocess.Popen(('git','describe','--always'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    cmd_out, cmd_err = cmd.communicate()
-    assert cmd_out
-    __version__ = cmd_out.strip()
+    __version__ = subprocess.Popen(
+        ('git','--git-dir',os.path.dirname(__file__),'describe','--always'), 
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+    assert __version__
 except:
     # otherwise check for a version file
     try:
-        from . version import __version__
+        from . version import version as __version__
     except:
         pass
