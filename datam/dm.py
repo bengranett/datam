@@ -57,7 +57,9 @@ class DataManager(object):
                 data = json.load(fp)
                 self.manifest = data['files']
                 self.meta = data['meta']
+            logging.debug("loaded manifest '%s'"%path)
         else:
+            logging.debug("manifest file not found '%s'"%path)
             self.manifest = []
             self.meta = {}
 
@@ -66,6 +68,13 @@ class DataManager(object):
         for item in self.manifest:
             if item['path'] == tag:
                 return True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        """ """
+        self.write_manifest()
 
     def write_manifest(self, indent=2):
         """ """
@@ -86,10 +95,9 @@ class DataManager(object):
             json.dump(out, fp, indent=indent, sort_keys=True)
         logging.debug("wrote '%s'", self.manifest_path)
 
-    def validate(self, clone=True):
+    def verify(self, clone=True):
         """ """
         if not self.manifest:
-            logging.debug("manifest is empty!")
             return 
 
         error_flag = False
@@ -161,58 +169,79 @@ class DataManager(object):
             logging.debug("manifest is empty!")
             return 
         for item in self.manifest:
-            print item['path']
+            print "{digest:8.8} {path}".format(**item)
+
+
+def _add(args):
+    with DataManager(path=args.manifest) as D:
+        for path in args.path:
+            try:
+                D.add(path)
+            except DuplicateFile as message:
+                logging.warning(message)
+
+def _pop(args):
+    with DataManager(path=args.manifest) as D:
+        for path in args.path:
+            D.pop(path)
+
+def _clone(args):
+    with DataManager(path=args.manifest) as D:
+        D.clone()
+
+def _verify(args):
+    with DataManager(path=args.manifest) as D:
+        D.clone()
+
+def _show(args):
+    with DataManager(path=args.manifest) as D:
+        D.show()
+
+def _hash(args):
+    for path in args.path:
+        print path, compute_hash(path)
+
 
 def main():
     """ """
     parser = argparse.ArgumentParser(description="datam: data manager")
-    parser.add_argument("--manifest", metavar='path', default="manifest.json", help="manifest file")
-    parser.add_argument("--add", metavar='path', nargs='*', type=str, help="path to data file")
-    parser.add_argument("--pop", metavar='path', nargs='*', type=str, help="remove paths from manifest")
-    parser.add_argument("--clone", action='store_true', help="download data files from remote")
-    parser.add_argument("--show", action='store_true', help="show contents of manifest file")    
-    parser.add_argument("--hash", metavar='path', nargs='*', help="compute hash")
-    parser.add_argument("-v", metavar='n', default=1, type=int, help='verbosity')
+
+    parser.add_argument("-m", "--manifest", metavar='path', default="manifest.json", help="manifest file")
+    parser.add_argument("-v", "--verbose", metavar='n', default=1, type=int, help='verbosity (0,1,2,3)')
+
+    subparser = parser.add_subparsers(title='commands')
+
+    parser_add = subparser.add_parser('add', help='check in files to manifest')
+    parser_add.add_argument("path", metavar='path', nargs='*', type=str, help="path to data file")
+    parser_add.set_defaults(func=_add)
+
+    parser_pop = subparser.add_parser('pop', help='remove files from manifest')
+    parser_pop.add_argument("path", metavar='path', nargs='*', type=str, help="path to data file")
+    parser_pop.set_defaults(func=_pop)
+
+    parser_verify = subparser.add_parser('verify', help='verify local files against manifest')
+    parser_verify.set_defaults(func=_verify)
+
+    parser_clone = subparser.add_parser('clone', help='download data files from remote')
+    parser_clone.set_defaults(func=_clone)
+
+    parser_show = subparser.add_parser('show', help='show contents of manifest file')
+    parser_show.set_defaults(func=_show)
+
+    parser_hash = subparser.add_parser('hash', help='compute hash of file and print to screen')
+    parser_hash.add_argument("path", metavar='path', nargs='*', type=str, help="path to data file")
+    parser_hash.set_defaults(func=_hash)
+
     args = parser.parse_args()
 
-    if args.v > 0:
+    if args.verbose > 2:
         logging.basicConfig(level=logging.DEBUG)
+    elif args.verbose > 1:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.CRITICAL)
 
-    D = DataManager(path=args.manifest)
-
-    change_flag = False
-
-    if args.hash:
-        for path in args.hash:
-            print path, compute_hash(path)
-
-    if args.clone:
-        D.clone()
-        change_flag = True
-
-    if args.add:
-        for path in args.add:
-            try:
-                D.add(path)
-                change_flag = True
-            except DuplicateFile as message:
-                logging.warning(message)
-
-    if args.pop:
-        for path in args.pop:
-            try:
-                D.pop(path)
-                change_flag = True
-            except DuplicateFile as message:
-                logging.warning(message)
-
-    if args.show:
-        D.show()
-
-    if change_flag:
-        D.write_manifest()
-
-    D.validate()
+    args.func(args)
 
 
 class DuplicateFile(Exception):
