@@ -124,6 +124,8 @@ class DataManager(object):
                 error_flag = True
                 logging.warning("Wrong hash: '%s'", path)
                 wrong_hash.append(path)
+            else:
+                logging.debug(u"\u2714 {digest:8.8} {path:50.50}".format(digest=digest, path=path))
 
         if missing_files:
             logging.warning("There are files missing.  Try running with --clone")
@@ -214,7 +216,7 @@ def main():
     parser = argparse.ArgumentParser(description="datam: data manager")
 
     parser.add_argument("-m", "--manifest", metavar='path', default="manifest.json", help="manifest file")
-    parser.add_argument("-v", "--verbose", metavar='n', default=1, type=int, help='verbosity (0,1,2,3)')
+    parser.add_argument("-v", "--verbose", metavar='n', default=3, type=int, help='verbosity (0,1,2,3)')
 
     subparser = parser.add_subparsers(title='commands')
 
