@@ -198,7 +198,7 @@ def _clone(args):
 
 def _verify(args):
     with DataManager(path=args.manifest) as D:
-        D.clone()
+        D.verify()
 
 def _show(args):
     with DataManager(path=args.manifest) as D:
