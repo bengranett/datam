@@ -25,6 +25,9 @@ def compute_hash(filename, chunk_size=1048576):
 
 def clone(remote, local):
     """ Clone the remote file to local directory """
+    if remote.strip() == "":
+        return
+
     try:
         os.makedirs(os.path.dirname(local))
     except OSError:
